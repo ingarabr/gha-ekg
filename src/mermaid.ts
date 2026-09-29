@@ -105,7 +105,8 @@ const MAX_LAYERS = 8;
 
 /**
  * Stacked cores: xychart draws bar series on top of each other in declaration order, so the cumulative
- * sums are declared from the tallest down and each visible layer is one core's share of the total.
+ * sums are declared from the tallest down and each visible layer is one core's share of the total, so the
+ * top edge of the stack is the total CPU.
  */
 function cpuChart(points: Point[], t0: number, cpus: number): string {
   const total: Series = { name: "total", color: "#e5484d", pick: (p) => p.cpu };
@@ -118,18 +119,17 @@ function cpuChart(points: Point[], t0: number, cpus: number): string {
   const name = (g: { from: number; to: number }) => (g.to - g.from === 1 ? `${g.from + 1}` : `${g.from + 1}-${g.to}`);
   const cumulative = (upTo: number): Pick => (p) => (100 * p.cores!.slice(0, upTo).reduce((a, b) => a + b, 0)) / cpus;
   const layerSeries = groups.map((g, i) => ({ name: name(g), color: CORE_COLORS[i], pick: cumulative(g.to) }));
-  const totalLine = { ...total, pick: cumulative(cpus) };
 
-  const data = [...layerSeries, totalLine].map((s) => bucket(points, t0, s.pick));
+  const data = [...layerSeries, { ...total, pick: cumulative(cpus) }].map((s) => bucket(points, t0, s.pick));
   if (data.some((d) => !d)) return "";
   const ys = data.map((d) => d!.y);
   const totalY = ys.at(-1)!;
   const square = (s: Series) => `${SQUARE[s.color] ?? "▪"}${s.name}`;
-  const key = `${SQUARE[totalLine.color]} total · cores ${layerSeries.map(square).join(" ")}`;
+  const key = `cores ${layerSeries.map(square).join(" ")}`;
   const avg = totalY.reduce((a, b) => a + b, 0) / totalY.length;
-  const title = `🔥 CPU (${cpus} cores) · avg ${avg.toFixed(0)}% · peak ${Math.max(...totalY).toFixed(0)}%   ${key}`;
+  const title = `🔥 CPU (${cpus} cores) · avg ${avg.toFixed(0)}% · peak ${Math.max(...totalY).toFixed(0)}% · ${key}`;
   const bars = layerSeries.map((_, i) => layerSeries.length - 1 - i).map((i) => `    bar [${ys[i].join(", ")}]`);
-  const palette = [...layerSeries.map((s) => s.color).reverse(), totalLine.color];
+  const palette = layerSeries.map((s) => s.color).reverse();
   return [
     "```mermaid",
     theme(palette),
@@ -138,7 +138,6 @@ function cpuChart(points: Point[], t0: number, cpus: number): string {
     `    x-axis "seconds" [${data[0]!.x.join(", ")}]`,
     '    y-axis "%" 0 --> 100',
     ...bars,
-    `    line [${totalY.join(", ")}]`,
     "```",
   ].join("\n");
 }

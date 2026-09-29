@@ -127235,17 +127235,16 @@ function cpuChart(points2, t0, cpus2) {
   const name = (g) => g.to - g.from === 1 ? `${g.from + 1}` : `${g.from + 1}-${g.to}`;
   const cumulative = (upTo) => (p) => 100 * p.cores.slice(0, upTo).reduce((a, b) => a + b, 0) / cpus2;
   const layerSeries = groups.map((g, i) => ({ name: name(g), color: CORE_COLORS[i], pick: cumulative(g.to) }));
-  const totalLine = { ...total2, pick: cumulative(cpus2) };
-  const data = [...layerSeries, totalLine].map((s) => bucket(points2, t0, s.pick));
+  const data = [...layerSeries, { ...total2, pick: cumulative(cpus2) }].map((s) => bucket(points2, t0, s.pick));
   if (data.some((d) => !d)) return "";
   const ys = data.map((d) => d.y);
   const totalY = ys.at(-1);
   const square = (s) => `${SQUARE[s.color] ?? "\u25AA"}${s.name}`;
-  const key = `${SQUARE[totalLine.color]} total \xB7 cores ${layerSeries.map(square).join(" ")}`;
+  const key = `cores ${layerSeries.map(square).join(" ")}`;
   const avg = totalY.reduce((a, b) => a + b, 0) / totalY.length;
-  const title = `\u{1F525} CPU (${cpus2} cores) \xB7 avg ${avg.toFixed(0)}% \xB7 peak ${Math.max(...totalY).toFixed(0)}%   ${key}`;
+  const title = `\u{1F525} CPU (${cpus2} cores) \xB7 avg ${avg.toFixed(0)}% \xB7 peak ${Math.max(...totalY).toFixed(0)}% \xB7 ${key}`;
   const bars = layerSeries.map((_2, i) => layerSeries.length - 1 - i).map((i) => `    bar [${ys[i].join(", ")}]`);
-  const palette = [...layerSeries.map((s) => s.color).reverse(), totalLine.color];
+  const palette = layerSeries.map((s) => s.color).reverse();
   return [
     "```mermaid",
     theme(palette),
@@ -127254,7 +127253,6 @@ function cpuChart(points2, t0, cpus2) {
     `    x-axis "seconds" [${data[0].x.join(", ")}]`,
     '    y-axis "%" 0 --> 100',
     ...bars,
-    `    line [${totalY.join(", ")}]`,
     "```"
   ].join("\n");
 }

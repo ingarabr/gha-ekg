@@ -30,7 +30,7 @@ test("mermaid report has per-core cpu, n/a for missing disk, and a step gantt", 
   assert.match(md, /build :s1, 00:00:00, 00:00:02/);
 });
 
-test("cores are stacked layers declared tallest first, with the total as a line", () => {
+test("cores are stacked layers declared tallest first", () => {
   const n = 4;
   const at = (t: number, busy: number) => ({
     t,
@@ -45,7 +45,7 @@ test("cores are stacked layers declared tallest first, with the total as a line"
   const md = renderReport({ ...meta, cpus: n }, points, undefined, undefined, "mermaid");
   const bars = [...cpuBlock(md).matchAll(/^ +bar \[(.*)\]$/gm)].map((m) => Number(m[1].split(", ")[0]));
   assert.deepEqual(bars, [50, 37.5, 25, 12.5]);
-  assert.match(cpuBlock(md), /^ +line \[50/m);
+  assert.doesNotMatch(cpuBlock(md), /^ +line /m);
 });
 
 test("more than eight cores are grouped into eight layers", () => {
