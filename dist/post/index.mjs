@@ -127208,8 +127208,10 @@ function chart(o) {
   const top = o.max ?? Math.max(1, Math.ceil(Math.max(...ys.flat()) * 1.15));
   const key = o.series.length > 1 ? "   " + o.series.map((s) => `${SQUARE[s.color] ?? "\u25AA"} ${s.name}`).join("  ") : "";
   const title = `${o.title} \xB7 avg ${avg.toFixed(1)}${o.unit} \xB7 peak ${Math.max(...stat).toFixed(1)}${o.unit}${key}`;
-  const marks = o.bars ? [`bar [${ys[0].join(", ")}]`, `line [${ys[0].join(", ")}]`] : ys.map((y) => `line [${y.join(", ")}]`);
-  const palette = o.bars ? [o.series[0].color, o.series[0].color] : o.series.map((s) => s.color);
+  const line2 = (y) => `line [${y.join(", ")}]`;
+  const marks = o.bars ? [`bar [${ys[0].join(", ")}]`, line2(ys[0]), ...ys.slice(1).map(line2)] : ys.map(line2);
+  const colors = o.series.map((s) => s.color);
+  const palette = o.bars ? [colors[0], ...colors] : colors;
   return [
     "```mermaid",
     theme(palette),
@@ -127221,16 +127223,27 @@ function chart(o) {
     "```"
   ].join("\n");
 }
+var MAX_CORE_LINES = 4;
 function cpuChart(points2, t0, cpus2) {
+  const total2 = { name: "total", color: "#e5484d", pick: (p) => p.cpu };
   if (!points2[0].cores) {
-    return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, bars: true, series: [{ name: "cpu", color: "#e5484d", pick: (p) => p.cpu }] });
+    return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, bars: true, series: [total2] });
   }
-  const shown = Math.min(cpus2, CORE_COLORS.length);
-  const series = [
-    { name: "total", color: "#e5484d", pick: (p) => p.cores.reduce((a, b) => a + b, 0) },
-    ...Array.from({ length: shown }, (_2, i) => ({ name: `core ${i + 1}`, color: CORE_COLORS[i], pick: (p) => p.cores[i] }))
+  const pct2 = (f) => (p) => 100 * f(p.cores);
+  const cores = cpus2 <= MAX_CORE_LINES ? Array.from({ length: cpus2 }, (_2, i) => ({ name: `core ${i + 1}`, color: CORE_COLORS[i], pick: pct2((c) => c[i]) })) : [
+    { name: "busiest core", color: "#f59e0b", pick: pct2((c) => Math.max(...c)) },
+    { name: "quietest core", color: "#3b82f6", pick: pct2((c) => Math.min(...c)) }
   ];
-  return chart({ title: `\u{1F525} CPU cores (of ${cpus2})`, unit: "", points: points2, t0, max: cpus2, series, statsFromFirst: true });
+  return chart({
+    title: `\u{1F525} CPU (${cpus2} cores)`,
+    unit: "%",
+    points: points2,
+    t0,
+    max: 100,
+    bars: true,
+    statsFromFirst: true,
+    series: [{ ...total2, pick: pct2((c) => c.reduce((a, b) => a + b, 0) / c.length) }, ...cores]
+  });
 }
 function gantt(steps2, t0) {
   const rows = steps2.filter((s) => s.end - s.start >= 1e3).map((s) => {

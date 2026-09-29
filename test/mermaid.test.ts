@@ -22,8 +22,26 @@ test("mermaid report has per-core cpu, n/a for missing disk, and a step gantt", 
   const steps = [{ number: 1, name: "build", start: 0, end: 2000 }];
   const md = renderReport(meta, points, steps, undefined, "mermaid");
   assert.match(md, /```mermaid/);
-  assert.match(md, /CPU cores \(of 2\)/);
+  assert.match(md, /CPU \(2 cores\)/);
   assert.match(md, /Disk MB\/s: n\/a on this platform/);
   assert.match(md, /gantt/);
   assert.match(md, /build :s1, 0, 2/);
+});
+
+test("many cores are summarised as busiest and quietest instead of one line each", () => {
+  const n = 8;
+  const at = (t: number, busy: number) => ({
+    t,
+    cpuBusy: busy * n,
+    cpuTotal: t * n,
+    coreBusy: Array.from({ length: n }, (_, i) => (i === 0 ? busy : 0)),
+    coreTotal: Array.from({ length: n }, () => t),
+    memUsed: 1,
+    memTotal: 2,
+  });
+  const points = toPoints([at(0, 0), at(1000, 1000), at(2000, 2000)]);
+  const md = renderReport({ ...meta, cpus: n }, points, undefined, undefined, "mermaid");
+  assert.match(md, /busiest core/);
+  assert.match(md, /quietest core/);
+  assert.doesNotMatch(md, /core 5/);
 });
