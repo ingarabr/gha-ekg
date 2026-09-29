@@ -15,13 +15,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        include:
+          - { os: ubuntu-latest, output: ascii }
+          - { os: ubuntu-24.04-arm, output: mermaid }
+          - { os: macos-latest, output: mermaid }
+          - { os: windows-latest, output: ascii }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./
         with:
           interval: 2
+          output: ${{ matrix.output }}
       - name: Idle
         shell: bash
         run: sleep 6

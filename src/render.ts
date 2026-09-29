@@ -1,3 +1,4 @@
+import { mermaidTimeline } from "./mermaid.ts";
 import { pointsInStep, summarize, type Stats } from "./analyze.ts";
 import type { Meta, Point, Step } from "./types.ts";
 
@@ -82,11 +83,14 @@ function stepTable(points: Point[], steps: Step[]): string {
   return rows.join("\n");
 }
 
-export function renderReport(meta: Meta, points: Point[], steps: Step[] | undefined, note?: string): string {
+export type OutputFormat = "ascii" | "mermaid";
+
+export function renderReport(meta: Meta, points: Point[], steps: Step[] | undefined, note?: string, format: OutputFormat = "ascii"): string {
   const s = summarize(points);
   const head = `## gha-ekg · ${meta.platform}/${meta.arch}`;
   if (!s) return `${head}\n\nNot enough samples collected (job shorter than one interval).`;
-  const parts = [head, overview(meta, s, points), "### Timeline", timeline(points)];
+  const chartBlock = format === "mermaid" ? mermaidTimeline(meta, points, steps) : timeline(points);
+  const parts = [head, overview(meta, s, points), "### Timeline", chartBlock];
   if (steps && steps.length > 0) {
     parts.push("### Steps", stepTable(points, steps), "_Steps shorter than the sampling interval have no samples._");
   } else if (note) {

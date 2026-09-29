@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { appendSummary, getInput, getState, warning } from "./actions.ts";
 import { toPoints } from "./analyze.ts";
 import { collect } from "./collectors/index.ts";
-import { renderReport } from "./render.ts";
+import { renderReport, type OutputFormat } from "./render.ts";
 import { fetchSteps } from "./steps.ts";
 import type { Meta, Sample, Step } from "./types.ts";
 
@@ -42,7 +42,9 @@ if (token) {
 }
 
 if (getInput("job-summary", "true") === "true") {
-  appendSummary(renderReport(meta, points, steps, note));
+  const format = getInput("output", "ascii");
+  if (format !== "ascii" && format !== "mermaid") warning(`gha-ekg: unknown output "${format}", using ascii`);
+  appendSummary(renderReport(meta, points, steps, note, format === "mermaid" ? "mermaid" : "ascii"));
 }
 
 if (getInput("upload-artifact", "true") === "true") {
