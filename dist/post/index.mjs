@@ -60,14 +60,15 @@ async function attempt(f) {
   }
 }
 function cpuTicks() {
-  let busy = 0;
-  let total2 = 0;
+  const coreBusy = [];
+  const coreTotal = [];
   for (const { times } of cpus()) {
     const all = times.user + times.nice + times.sys + times.idle + times.irq;
-    total2 += all;
-    busy += all - times.idle;
+    coreTotal.push(all);
+    coreBusy.push(all - times.idle);
   }
-  return { cpuBusy: busy, cpuTotal: total2 };
+  const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+  return { cpuBusy: sum(coreBusy), cpuTotal: sum(coreTotal), coreBusy, coreTotal };
 }
 var init_util = __esm({
   "src/collectors/util.ts"() {
@@ -127095,11 +127096,16 @@ function toPoints(samples2) {
     const dt = (b.t - a.t) / 1e3;
     if (dt <= 0) continue;
     const dTotal = b.cpuTotal - a.cpuTotal;
+    const cores = a.coreBusy && a.coreTotal && b.coreBusy && b.coreTotal && a.coreBusy.length === b.coreBusy.length ? b.coreBusy.map((busy, i2) => {
+      const d = b.coreTotal[i2] - a.coreTotal[i2];
+      return d > 0 ? Math.min(1, (busy - a.coreBusy[i2]) / d) : 0;
+    }) : void 0;
     const rate = (x, y) => x === void 0 || y === void 0 || y < x ? void 0 : (y - x) / dt;
     points2.push({
       t: b.t,
       dt,
       cpu: dTotal > 0 ? 100 * (b.cpuBusy - a.cpuBusy) / dTotal : 0,
+      cores,
       memUsed: b.memUsed,
       memTotal: b.memTotal,
       diskRead: rate(a.diskRead, b.diskRead),
@@ -127143,6 +127149,128 @@ async function collect4() {
     default:
       throw new Error(`unsupported platform: ${process.platform}`);
   }
+}
+
+// src/mermaid.ts
+var MAX_BUCKETS = 30;
+var MUTED = "#8b949e";
+var CORE_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#a855f7", "#eab308", "#14b8a6", "#ec4899", "#78716c"];
+var SQUARE = {
+  "#e5484d": "\u{1F7E5}",
+  "#3b82f6": "\u{1F7E6}",
+  "#22c55e": "\u{1F7E9}",
+  "#f59e0b": "\u{1F7E7}",
+  "#a855f7": "\u{1F7EA}",
+  "#eab308": "\u{1F7E8}",
+  "#14b8a6": "\u{1FA75}",
+  "#ec4899": "\u{1FA77}",
+  "#78716c": "\u{1F7EB}"
+};
+function bucket(points2, t0, pick) {
+  const size = Math.ceil(points2.length / MAX_BUCKETS);
+  const x = [];
+  const y = [];
+  for (let i = 0; i < points2.length; i += size) {
+    const chunk = points2.slice(i, i + size);
+    const vals = chunk.map(pick).filter((v) => v !== void 0);
+    if (vals.length === 0) return void 0;
+    const sec = Math.round((chunk.at(-1).t - t0) / 1e3);
+    x.push(x.length > 0 && sec <= x.at(-1) ? x.at(-1) + 1 : sec);
+    y.push(Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2)));
+  }
+  return { x, y };
+}
+function theme(colors) {
+  const axis = ["xAxisLabel", "xAxisTitle", "xAxisTick", "xAxisLine", "yAxisLabel", "yAxisTitle", "yAxisTick", "yAxisLine"];
+  return [
+    "---",
+    "config:",
+    "  theme: base",
+    "  themeVariables:",
+    "    xyChart:",
+    '      backgroundColor: "transparent"',
+    `      titleColor: "${MUTED}"`,
+    ...axis.map((k) => `      ${k}Color: "${MUTED}"`),
+    `      plotColorPalette: "${colors.join(", ")}"`,
+    "  xyChart:",
+    "    width: 900",
+    "    height: 260",
+    "    titleFontSize: 16",
+    "---"
+  ].join("\n");
+}
+function chart(o) {
+  const data = o.series.map((s) => bucket(o.points, o.t0, s.pick));
+  if (data.some((d) => !d)) return `_${o.title}: n/a on this platform_`;
+  const ys = data.map((d) => d.y);
+  const stat = o.statsFromFirst ? ys[0] : ys.flat();
+  const avg = stat.reduce((a, b) => a + b, 0) / stat.length;
+  const top = o.max ?? Math.max(1, Math.ceil(Math.max(...ys.flat()) * 1.15));
+  const key = o.series.length > 1 ? "   " + o.series.map((s) => `${SQUARE[s.color] ?? "\u25AA"} ${s.name}`).join("  ") : "";
+  const title = `${o.title} \xB7 avg ${avg.toFixed(1)}${o.unit} \xB7 peak ${Math.max(...stat).toFixed(1)}${o.unit}${key}`;
+  const marks = o.bars ? [`bar [${ys[0].join(", ")}]`, `line [${ys[0].join(", ")}]`] : ys.map((y) => `line [${y.join(", ")}]`);
+  const palette = o.bars ? [o.series[0].color, o.series[0].color] : o.series.map((s) => s.color);
+  return [
+    "```mermaid",
+    theme(palette),
+    "xychart-beta",
+    `    title "${title}"`,
+    `    x-axis "seconds" [${data[0].x.join(", ")}]`,
+    `    y-axis "${o.unit}" 0 --> ${top}`,
+    ...marks.map((m) => `    ${m}`),
+    "```"
+  ].join("\n");
+}
+function cpuChart(points2, t0, cpus2) {
+  if (!points2[0].cores) {
+    return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, bars: true, series: [{ name: "cpu", color: "#e5484d", pick: (p) => p.cpu }] });
+  }
+  const shown = Math.min(cpus2, CORE_COLORS.length);
+  const series = [
+    { name: "total", color: "#e5484d", pick: (p) => p.cores.reduce((a, b) => a + b, 0) },
+    ...Array.from({ length: shown }, (_2, i) => ({ name: `core ${i + 1}`, color: CORE_COLORS[i], pick: (p) => p.cores[i] }))
+  ];
+  return chart({ title: `\u{1F525} CPU cores (of ${cpus2})`, unit: "", points: points2, t0, max: cpus2, series, statsFromFirst: true });
+}
+function gantt(steps2, t0) {
+  const rows = steps2.filter((s) => s.end - s.start >= 1e3).map((s) => {
+    const a = Math.max(0, Math.round((s.start - t0) / 1e3));
+    const b = Math.max(a + 1, Math.round((s.end - t0) / 1e3));
+    return `    ${s.name.replace(/[:;#]/g, " ")} :s${s.number}, ${a}, ${b}`;
+  });
+  if (rows.length === 0) return "";
+  return ["```mermaid", "gantt", "    title Steps", "    dateFormat X", "    axisFormat %Ss", "    section job", ...rows, "```"].join("\n");
+}
+function mermaidTimeline(meta2, points2, steps2) {
+  const t0 = meta2.startedAt;
+  const mb = (v) => v === void 0 ? void 0 : v / 1048576;
+  const parts = [
+    cpuChart(points2, t0, meta2.cpus),
+    chart({ title: "\u{1F9E0} Memory", unit: "%", points: points2, t0, max: 100, bars: true, series: [{ name: "used", color: "#a855f7", pick: (p) => 100 * p.memUsed / p.memTotal }] }),
+    chart({
+      title: "\u{1F4BE} Disk MB/s",
+      unit: "",
+      points: points2,
+      t0,
+      series: [
+        { name: "read", color: "#3b82f6", pick: (p) => mb(p.diskRead) },
+        { name: "write", color: "#22c55e", pick: (p) => mb(p.diskWrite) }
+      ]
+    }),
+    chart({
+      title: "\u{1F310} Network MB/s",
+      unit: "",
+      points: points2,
+      t0,
+      series: [
+        { name: "rx", color: "#3b82f6", pick: (p) => mb(p.netRx) },
+        { name: "tx", color: "#f59e0b", pick: (p) => mb(p.netTx) }
+      ]
+    })
+  ];
+  const g = steps2 ? gantt(steps2, t0) : "";
+  if (g) parts.push(g);
+  return parts.join("\n\n");
 }
 
 // src/render.ts
@@ -127216,13 +127344,14 @@ function stepTable(points2, steps2) {
   }
   return rows.join("\n");
 }
-function renderReport(meta2, points2, steps2, note2) {
+function renderReport(meta2, points2, steps2, note2, format = "ascii") {
   const s = summarize(points2);
   const head = `## gha-ekg \xB7 ${meta2.platform}/${meta2.arch}`;
   if (!s) return `${head}
 
 Not enough samples collected (job shorter than one interval).`;
-  const parts = [head, overview(meta2, s, points2), "### Timeline", timeline(points2)];
+  const chartBlock = format === "mermaid" ? mermaidTimeline(meta2, points2, steps2) : timeline(points2);
+  const parts = [head, overview(meta2, s, points2), "### Timeline", chartBlock];
   if (steps2 && steps2.length > 0) {
     parts.push("### Steps", stepTable(points2, steps2), "_Steps shorter than the sampling interval have no samples._");
   } else if (note2) {
@@ -127273,7 +127402,9 @@ if (token) {
   }
 }
 if (getInput("job-summary", "true") === "true") {
-  appendSummary(renderReport(meta, points, steps, note));
+  const format = getInput("output", "ascii");
+  if (format !== "ascii" && format !== "mermaid") warning(`gha-ekg: unknown output "${format}", using ascii`);
+  appendSummary(renderReport(meta, points, steps, note, format === "mermaid" ? "mermaid" : "ascii"));
 }
 if (getInput("upload-artifact", "true") === "true") {
   try {

@@ -2,6 +2,8 @@
 export interface Counters {
   cpuBusy: number;
   cpuTotal: number;
+  coreBusy?: number[];
+  coreTotal?: number[];
   memUsed: number;
   memTotal: number;
   diskRead?: number;
@@ -35,6 +37,8 @@ export interface Point {
   t: number;
   dt: number;
   cpu: number;
+  /** Busy fraction (0..1) per core. */
+  cores?: number[];
   memUsed: number;
   memTotal: number;
   diskRead?: number;

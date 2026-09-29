@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { cpus } from "node:os";
+import type { Counters } from "../types.ts";
 
 export function run(cmd: string, args: string[], timeout = 10_000): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -17,13 +18,14 @@ export async function attempt<T>(f: () => Promise<T>): Promise<T | undefined> {
   }
 }
 
-export function cpuTicks(): { cpuBusy: number; cpuTotal: number } {
-  let busy = 0;
-  let total = 0;
+export function cpuTicks(): Pick<Counters, "cpuBusy" | "cpuTotal" | "coreBusy" | "coreTotal"> {
+  const coreBusy: number[] = [];
+  const coreTotal: number[] = [];
   for (const { times } of cpus()) {
     const all = times.user + times.nice + times.sys + times.idle + times.irq;
-    total += all;
-    busy += all - times.idle;
+    coreTotal.push(all);
+    coreBusy.push(all - times.idle);
   }
-  return { cpuBusy: busy, cpuTotal: total };
+  const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+  return { cpuBusy: sum(coreBusy), cpuTotal: sum(coreTotal), coreBusy, coreTotal };
 }

@@ -8,12 +8,20 @@ export function toPoints(samples: Sample[]): Point[] {
     const dt = (b.t - a.t) / 1000;
     if (dt <= 0) continue;
     const dTotal = b.cpuTotal - a.cpuTotal;
+    const cores =
+      a.coreBusy && a.coreTotal && b.coreBusy && b.coreTotal && a.coreBusy.length === b.coreBusy.length
+        ? b.coreBusy.map((busy, i) => {
+            const d = b.coreTotal![i] - a.coreTotal![i];
+            return d > 0 ? Math.min(1, (busy - a.coreBusy![i]) / d) : 0;
+          })
+        : undefined;
     const rate = (x?: number, y?: number) =>
       x === undefined || y === undefined || y < x ? undefined : (y - x) / dt;
     points.push({
       t: b.t,
       dt,
       cpu: dTotal > 0 ? (100 * (b.cpuBusy - a.cpuBusy)) / dTotal : 0,
+      cores,
       memUsed: b.memUsed,
       memTotal: b.memTotal,
       diskRead: rate(a.diskRead, b.diskRead),

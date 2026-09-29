@@ -11,6 +11,9 @@ inputs:
   github-token:
     description: Token used to read step timings for the per-step breakdown (needs actions read). Empty disables it.
     default: ${{ github.token }}
+  output:
+    description: "Chart format in the job summary: ascii or mermaid"
+    default: ascii
   job-summary:
     description: Write the report to the job summary
     default: "true"

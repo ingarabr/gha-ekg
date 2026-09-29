@@ -16,6 +16,7 @@ steps:
 | Input | Default | |
 |---|---|---|
 | `interval` | `5` | Sampling interval in seconds |
+| `output` | `ascii` | Chart format in the summary: `ascii` (sparklines) or `mermaid` (line and bar charts, per-core CPU, step gantt) |
 | `job-summary` | `true` | Write the report to the job summary |
 | `upload-artifact` | `true` | Upload `samples.jsonl` and `meta.json` as an artifact |
 | `github-token` | `${{ github.token }}` | Used to read step timings. Empty disables the step breakdown |
