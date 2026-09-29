@@ -60,14 +60,15 @@ async function attempt(f) {
   }
 }
 function cpuTicks() {
-  let busy = 0;
-  let total2 = 0;
+  const coreBusy = [];
+  const coreTotal = [];
   for (const { times } of cpus()) {
     const all = times.user + times.nice + times.sys + times.idle + times.irq;
-    total2 += all;
-    busy += all - times.idle;
+    coreTotal.push(all);
+    coreBusy.push(all - times.idle);
   }
-  return { cpuBusy: busy, cpuTotal: total2 };
+  const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+  return { cpuBusy: sum(coreBusy), cpuTotal: sum(coreTotal), coreBusy, coreTotal };
 }
 var init_util = __esm({
   "src/collectors/util.ts"() {
@@ -127095,11 +127096,16 @@ function toPoints(samples2) {
     const dt = (b.t - a.t) / 1e3;
     if (dt <= 0) continue;
     const dTotal = b.cpuTotal - a.cpuTotal;
+    const cores = a.coreBusy && a.coreTotal && b.coreBusy && b.coreTotal && a.coreBusy.length === b.coreBusy.length ? b.coreBusy.map((busy, i2) => {
+      const d = b.coreTotal[i2] - a.coreTotal[i2];
+      return d > 0 ? Math.min(1, (busy - a.coreBusy[i2]) / d) : 0;
+    }) : void 0;
     const rate = (x, y) => x === void 0 || y === void 0 || y < x ? void 0 : (y - x) / dt;
     points2.push({
       t: b.t,
       dt,
       cpu: dTotal > 0 ? 100 * (b.cpuBusy - a.cpuBusy) / dTotal : 0,
+      cores,
       memUsed: b.memUsed,
       memTotal: b.memTotal,
       diskRead: rate(a.diskRead, b.diskRead),

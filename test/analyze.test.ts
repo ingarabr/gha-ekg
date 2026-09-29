@@ -43,3 +43,11 @@ test("sparkline scales to max and downsamples", () => {
   assert.equal(sparkline([0, 0, 0], 60), "▁▁▁");
   assert.equal(sparkline(Array(120).fill(1), 60).length, 60);
 });
+
+test("per-core busy fractions", () => {
+  const points = toPoints([
+    s(0, 0, 0, { coreBusy: [0, 0], coreTotal: [0, 0] }),
+    s(1000, 60, 200, { coreBusy: [50, 10], coreTotal: [100, 100] }),
+  ]);
+  assert.deepEqual(points[0].cores, [0.5, 0.1]);
+});

@@ -30,14 +30,15 @@ async function attempt(f) {
   }
 }
 function cpuTicks() {
-  let busy2 = 0;
-  let total = 0;
+  const coreBusy = [];
+  const coreTotal = [];
   for (const { times } of cpus()) {
     const all = times.user + times.nice + times.sys + times.idle + times.irq;
-    total += all;
-    busy2 += all - times.idle;
+    coreTotal.push(all);
+    coreBusy.push(all - times.idle);
   }
-  return { cpuBusy: busy2, cpuTotal: total };
+  const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+  return { cpuBusy: sum(coreBusy), cpuTotal: sum(coreTotal), coreBusy, coreTotal };
 }
 var init_util = __esm({
   "src/collectors/util.ts"() {
