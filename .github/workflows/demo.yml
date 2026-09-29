@@ -1,0 +1,33 @@
+name: demo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  demo:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        with:
+          interval: 2
+      - name: Idle
+        shell: bash
+        run: sleep 6
+      - name: Workload (cpu, memory, disk, network)
+        shell: bash
+        run: node demo/workload.mjs 32
+      - name: Cool down
+        shell: bash
+        run: sleep 6

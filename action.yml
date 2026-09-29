@@ -1,0 +1,24 @@
+name: gha-ekg
+description: Monitor CPU, memory, disk and network during a job and post a report to the job summary
+author: ingarabr
+inputs:
+  interval:
+    description: Sampling interval in seconds
+    default: "5"
+  upload-artifact:
+    description: Upload the raw samples as a JSONL artifact
+    default: "true"
+  github-token:
+    description: Token used to read step timings for the per-step breakdown (needs actions read). Empty disables it.
+    default: ${{ github.token }}
+  job-summary:
+    description: Write the report to the job summary
+    default: "true"
+runs:
+  using: node24
+  main: dist/main/index.mjs
+  post: dist/post/index.mjs
+  post-if: always()
+branding:
+  icon: activity
+  color: red
