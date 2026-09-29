@@ -11,6 +11,19 @@ steps:
   - run: ./build.sh
 ```
 
+## Demo
+
+- **Live runs:** the [demo workflow](https://github.com/ingarabr/gha-ekg/actions/workflows/demo.yml) runs the action on Linux (x64 and arm64), macOS and Windows on every push to `main`. Open a run, then a job's *Summary* tab to see the report.
+- **Sample output:** [docs/demo.md](docs/demo.md) contains the summaries from one run as committed text, so the charts render on GitHub and never expire. Run logs and summaries on GitHub are kept for the repository's retention period (90 days at most), which is why the sample is committed.
+
+To refresh the sample from the latest run:
+
+```
+gh run download <run-id> -D artifacts
+gh api "repos/ingarabr/gha-ekg/actions/runs/<run-id>/jobs?per_page=100" > jobs.json
+node scripts/render-demo.ts artifacts jobs.json docs/demo.md
+```
+
 ## Inputs
 
 | Input | Default | |
