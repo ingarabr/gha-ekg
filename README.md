@@ -21,6 +21,23 @@ steps:
 | `upload-artifact` | `true` | Upload `samples.jsonl` and `meta.json` as an artifact |
 | `github-token` | `${{ github.token }}` | Used to read step timings. Empty disables the step breakdown |
 
+## Output formats
+
+Set `output` to choose how the timeline is drawn in the job summary. The overview table and the per-step table are the same in both.
+
+| Value | Timeline |
+|---|---|
+| `ascii` (default) | One text sparkline per metric in a code block. Compact, works everywhere, and stays readable for large matrix builds. |
+| `mermaid` | Rendered charts: CPU as one line per core plus a total on a cores axis, memory as bars, disk and network as read/write and rx/tx lines, and a gantt chart of the steps. Charts are downsampled to about 30 points. |
+
+```yaml
+- uses: ingarabr/gha-ekg@main
+  with:
+    output: mermaid
+```
+
+Mermaid renders one iframe per chart, so for jobs that produce many summaries (large matrices) `ascii` is the lighter choice. The raw samples are always available in the artifact, independent of the chosen format.
+
 ## How it works
 
 `main` starts a detached Node process that appends a JSON line of cumulative OS counters every interval. `post` (always runs) stops it, takes a final sample, converts counters to rates, and renders the report. Step boundaries come from the jobs API and are matched to samples by timestamp, so steps shorter than the interval show no data.
