@@ -127223,36 +127223,63 @@ function chart(o) {
     "```"
   ].join("\n");
 }
-var MAX_CORE_LINES = 4;
+var MAX_LAYERS = 8;
 function cpuChart(points2, t0, cpus2) {
   const total2 = { name: "total", color: "#e5484d", pick: (p) => p.cpu };
   if (!points2[0].cores) {
     return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, bars: true, series: [total2] });
   }
-  const pct2 = (f) => (p) => 100 * f(p.cores);
-  const cores = cpus2 <= MAX_CORE_LINES ? Array.from({ length: cpus2 }, (_2, i) => ({ name: `core ${i + 1}`, color: CORE_COLORS[i], pick: pct2((c) => c[i]) })) : [
-    { name: "busiest core", color: "#f59e0b", pick: pct2((c) => Math.max(...c)) },
-    { name: "quietest core", color: "#3b82f6", pick: pct2((c) => Math.min(...c)) }
-  ];
-  return chart({
-    title: `\u{1F525} CPU (${cpus2} cores)`,
-    unit: "%",
-    points: points2,
-    t0,
-    max: 100,
-    bars: true,
-    statsFromFirst: true,
-    series: [{ ...total2, pick: pct2((c) => c.reduce((a, b) => a + b, 0) / c.length) }, ...cores]
-  });
+  const layers = Math.min(cpus2, MAX_LAYERS);
+  const per = Math.ceil(cpus2 / layers);
+  const groups = Array.from({ length: layers }, (_2, i) => ({ from: i * per, to: Math.min(cpus2, (i + 1) * per) }));
+  const name = (g) => g.to - g.from === 1 ? `${g.from + 1}` : `${g.from + 1}-${g.to}`;
+  const cumulative = (upTo) => (p) => 100 * p.cores.slice(0, upTo).reduce((a, b) => a + b, 0) / cpus2;
+  const layerSeries = groups.map((g, i) => ({ name: name(g), color: CORE_COLORS[i], pick: cumulative(g.to) }));
+  const totalLine = { ...total2, pick: cumulative(cpus2) };
+  const data = [...layerSeries, totalLine].map((s) => bucket(points2, t0, s.pick));
+  if (data.some((d) => !d)) return "";
+  const ys = data.map((d) => d.y);
+  const totalY = ys.at(-1);
+  const square = (s) => `${SQUARE[s.color] ?? "\u25AA"}${s.name}`;
+  const key = `${SQUARE[totalLine.color]} total \xB7 cores ${layerSeries.map(square).join(" ")}`;
+  const avg = totalY.reduce((a, b) => a + b, 0) / totalY.length;
+  const title = `\u{1F525} CPU (${cpus2} cores) \xB7 avg ${avg.toFixed(0)}% \xB7 peak ${Math.max(...totalY).toFixed(0)}%   ${key}`;
+  const bars = layerSeries.map((_2, i) => layerSeries.length - 1 - i).map((i) => `    bar [${ys[i].join(", ")}]`);
+  const palette = [...layerSeries.map((s) => s.color).reverse(), totalLine.color];
+  return [
+    "```mermaid",
+    theme(palette),
+    "xychart-beta",
+    `    title "${title}"`,
+    `    x-axis "seconds" [${data[0].x.join(", ")}]`,
+    '    y-axis "%" 0 --> 100',
+    ...bars,
+    `    line [${totalY.join(", ")}]`,
+    "```"
+  ].join("\n");
+}
+function clock(sec) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(Math.floor(sec / 3600))}:${p(Math.floor(sec % 3600 / 60))}:${p(sec % 60)}`;
 }
 function gantt(steps2, t0) {
-  const rows = steps2.filter((s) => s.end - s.start >= 1e3).map((s) => {
+  const spans = steps2.filter((s) => s.end - s.start >= 1e3).map((s) => {
     const a = Math.max(0, Math.round((s.start - t0) / 1e3));
-    const b = Math.max(a + 1, Math.round((s.end - t0) / 1e3));
-    return `    ${s.name.replace(/[:;#]/g, " ")} :s${s.number}, ${a}, ${b}`;
+    return { s, a, b: Math.max(a + 1, Math.round((s.end - t0) / 1e3)) };
   });
-  if (rows.length === 0) return "";
-  return ["```mermaid", "gantt", "    title Steps", "    dateFormat X", "    axisFormat %Ss", "    section job", ...rows, "```"].join("\n");
+  if (spans.length === 0) return "";
+  const long = Math.max(...spans.map((x) => x.b)) >= 3600;
+  const rows = spans.map(({ s, a, b }) => `    ${s.name.replace(/[:;#]/g, " ")} :s${s.number}, ${clock(a)}, ${clock(b)}`);
+  return [
+    "```mermaid",
+    "gantt",
+    "    title Steps",
+    "    dateFormat HH:mm:ss",
+    `    axisFormat ${long ? "%H:%M:%S" : "%M:%S"}`,
+    "    section job",
+    ...rows,
+    "```"
+  ].join("\n");
 }
 function mermaidTimeline(meta2, points2, steps2) {
   const t0 = meta2.startedAt;
