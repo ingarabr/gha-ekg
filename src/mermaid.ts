@@ -71,8 +71,6 @@ interface ChartOptions {
   t0: number;
   series: Series[];
   max?: number;
-  /** Draw the first series as bars with a line on top; the others stay lines. */
-  bars?: boolean;
   statsFromFirst?: boolean;
 }
 
@@ -85,10 +83,8 @@ function chart(o: ChartOptions): string {
   const top = o.max ?? Math.max(1, Math.ceil(Math.max(...ys.flat()) * 1.15));
   const key = o.series.length > 1 ? "   " + o.series.map((s) => `${SQUARE[s.color] ?? "▪"} ${s.name}`).join("  ") : "";
   const title = `${o.title} · avg ${avg.toFixed(1)}${o.unit} · peak ${Math.max(...stat).toFixed(1)}${o.unit}${key}`;
-  const line = (y: number[]) => `line [${y.join(", ")}]`;
-  const marks = o.bars ? [`bar [${ys[0].join(", ")}]`, line(ys[0]), ...ys.slice(1).map(line)] : ys.map(line);
-  const colors = o.series.map((s) => s.color);
-  const palette = o.bars ? [colors[0], ...colors] : colors;
+  const marks = ys.map((y) => `line [${y.join(", ")}]`);
+  const palette = o.series.map((s) => s.color);
   return [
     "```mermaid",
     theme(palette),
@@ -111,7 +107,7 @@ const MAX_LAYERS = 8;
 function cpuChart(points: Point[], t0: number, cpus: number): string {
   const total: Series = { name: "total", color: "#e5484d", pick: (p) => p.cpu };
   if (!points[0].cores) {
-    return chart({ title: "🔥 CPU", unit: "%", points, t0, max: 100, bars: true, series: [total] });
+    return chart({ title: "🔥 CPU", unit: "%", points, t0, max: 100, series: [total] });
   }
   const layers = Math.min(cpus, MAX_LAYERS);
   const per = Math.ceil(cpus / layers);
@@ -174,7 +170,7 @@ export function mermaidTimeline(meta: Meta, points: Point[], steps?: Step[]): st
   const mb = (v?: number) => (v === undefined ? undefined : v / 1048576);
   const parts = [
     cpuChart(points, t0, meta.cpus),
-    chart({ title: "🧠 Memory", unit: "%", points, t0, max: 100, bars: true, series: [{ name: "used", color: "#a855f7", pick: (p) => (100 * p.memUsed) / p.memTotal }] }),
+    chart({ title: "🧠 Memory", unit: "%", points, t0, max: 100, series: [{ name: "used", color: "#a855f7", pick: (p) => (100 * p.memUsed) / p.memTotal }] }),
     chart({
       title: "💾 Disk MB/s",
       unit: "",

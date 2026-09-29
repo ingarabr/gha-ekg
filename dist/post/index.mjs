@@ -127208,10 +127208,8 @@ function chart(o) {
   const top = o.max ?? Math.max(1, Math.ceil(Math.max(...ys.flat()) * 1.15));
   const key = o.series.length > 1 ? "   " + o.series.map((s) => `${SQUARE[s.color] ?? "\u25AA"} ${s.name}`).join("  ") : "";
   const title = `${o.title} \xB7 avg ${avg.toFixed(1)}${o.unit} \xB7 peak ${Math.max(...stat).toFixed(1)}${o.unit}${key}`;
-  const line2 = (y) => `line [${y.join(", ")}]`;
-  const marks = o.bars ? [`bar [${ys[0].join(", ")}]`, line2(ys[0]), ...ys.slice(1).map(line2)] : ys.map(line2);
-  const colors = o.series.map((s) => s.color);
-  const palette = o.bars ? [colors[0], ...colors] : colors;
+  const marks = ys.map((y) => `line [${y.join(", ")}]`);
+  const palette = o.series.map((s) => s.color);
   return [
     "```mermaid",
     theme(palette),
@@ -127227,7 +127225,7 @@ var MAX_LAYERS = 8;
 function cpuChart(points2, t0, cpus2) {
   const total2 = { name: "total", color: "#e5484d", pick: (p) => p.cpu };
   if (!points2[0].cores) {
-    return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, bars: true, series: [total2] });
+    return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, series: [total2] });
   }
   const layers = Math.min(cpus2, MAX_LAYERS);
   const per = Math.ceil(cpus2 / layers);
@@ -127284,7 +127282,7 @@ function mermaidTimeline(meta2, points2, steps2) {
   const mb = (v) => v === void 0 ? void 0 : v / 1048576;
   const parts = [
     cpuChart(points2, t0, meta2.cpus),
-    chart({ title: "\u{1F9E0} Memory", unit: "%", points: points2, t0, max: 100, bars: true, series: [{ name: "used", color: "#a855f7", pick: (p) => 100 * p.memUsed / p.memTotal }] }),
+    chart({ title: "\u{1F9E0} Memory", unit: "%", points: points2, t0, max: 100, series: [{ name: "used", color: "#a855f7", pick: (p) => 100 * p.memUsed / p.memTotal }] }),
     chart({
       title: "\u{1F4BE} Disk MB/s",
       unit: "",
