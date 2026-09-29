@@ -127208,8 +127208,8 @@ function chart(o) {
   const top = o.max ?? Math.max(1, Math.ceil(Math.max(...ys.flat()) * 1.15));
   const key = o.series.length > 1 ? "   " + o.series.map((s) => `${SQUARE[s.color] ?? "\u25AA"} ${s.name}`).join("  ") : "";
   const title = `${o.title} \xB7 avg ${avg.toFixed(1)}${o.unit} \xB7 peak ${Math.max(...stat).toFixed(1)}${o.unit}${key}`;
-  const marks = o.bars ? [`bar [${ys[0].join(", ")}]`, `line [${ys[0].join(", ")}]`] : ys.map((y) => `line [${y.join(", ")}]`);
-  const palette = o.bars ? [o.series[0].color, o.series[0].color] : o.series.map((s) => s.color);
+  const marks = ys.map((y) => `line [${y.join(", ")}]`);
+  const palette = o.series.map((s) => s.color);
   return [
     "```mermaid",
     theme(palette),
@@ -127221,32 +127221,68 @@ function chart(o) {
     "```"
   ].join("\n");
 }
+var MAX_LAYERS = 8;
 function cpuChart(points2, t0, cpus2) {
+  const total2 = { name: "total", color: "#e5484d", pick: (p) => p.cpu };
   if (!points2[0].cores) {
-    return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, bars: true, series: [{ name: "cpu", color: "#e5484d", pick: (p) => p.cpu }] });
+    return chart({ title: "\u{1F525} CPU", unit: "%", points: points2, t0, max: 100, series: [total2] });
   }
-  const shown = Math.min(cpus2, CORE_COLORS.length);
-  const series = [
-    { name: "total", color: "#e5484d", pick: (p) => p.cores.reduce((a, b) => a + b, 0) },
-    ...Array.from({ length: shown }, (_2, i) => ({ name: `core ${i + 1}`, color: CORE_COLORS[i], pick: (p) => p.cores[i] }))
-  ];
-  return chart({ title: `\u{1F525} CPU cores (of ${cpus2})`, unit: "", points: points2, t0, max: cpus2, series, statsFromFirst: true });
+  const layers = Math.min(cpus2, MAX_LAYERS);
+  const per = Math.ceil(cpus2 / layers);
+  const groups = Array.from({ length: layers }, (_2, i) => ({ from: i * per, to: Math.min(cpus2, (i + 1) * per) }));
+  const name = (g) => g.to - g.from === 1 ? `${g.from + 1}` : `${g.from + 1}-${g.to}`;
+  const cumulative = (upTo) => (p) => 100 * p.cores.slice(0, upTo).reduce((a, b) => a + b, 0) / cpus2;
+  const layerSeries = groups.map((g, i) => ({ name: name(g), color: CORE_COLORS[i], pick: cumulative(g.to) }));
+  const data = [...layerSeries, { ...total2, pick: cumulative(cpus2) }].map((s) => bucket(points2, t0, s.pick));
+  if (data.some((d) => !d)) return "";
+  const ys = data.map((d) => d.y);
+  const totalY = ys.at(-1);
+  const square = (s) => `${SQUARE[s.color] ?? "\u25AA"}${s.name}`;
+  const key = `cores ${layerSeries.map(square).join(" ")}`;
+  const avg = totalY.reduce((a, b) => a + b, 0) / totalY.length;
+  const title = `\u{1F525} CPU (${cpus2} cores) \xB7 avg ${avg.toFixed(0)}% \xB7 peak ${Math.max(...totalY).toFixed(0)}% \xB7 ${key}`;
+  const bars = layerSeries.map((_2, i) => layerSeries.length - 1 - i).map((i) => `    bar [${ys[i].join(", ")}]`);
+  const palette = layerSeries.map((s) => s.color).reverse();
+  return [
+    "```mermaid",
+    theme(palette),
+    "xychart-beta",
+    `    title "${title}"`,
+    `    x-axis "seconds" [${data[0].x.join(", ")}]`,
+    '    y-axis "%" 0 --> 100',
+    ...bars,
+    "```"
+  ].join("\n");
+}
+function clock(sec) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(Math.floor(sec / 3600))}:${p(Math.floor(sec % 3600 / 60))}:${p(sec % 60)}`;
 }
 function gantt(steps2, t0) {
-  const rows = steps2.filter((s) => s.end - s.start >= 1e3).map((s) => {
+  const spans = steps2.filter((s) => s.end - s.start >= 1e3).map((s) => {
     const a = Math.max(0, Math.round((s.start - t0) / 1e3));
-    const b = Math.max(a + 1, Math.round((s.end - t0) / 1e3));
-    return `    ${s.name.replace(/[:;#]/g, " ")} :s${s.number}, ${a}, ${b}`;
+    return { s, a, b: Math.max(a + 1, Math.round((s.end - t0) / 1e3)) };
   });
-  if (rows.length === 0) return "";
-  return ["```mermaid", "gantt", "    title Steps", "    dateFormat X", "    axisFormat %Ss", "    section job", ...rows, "```"].join("\n");
+  if (spans.length === 0) return "";
+  const long = Math.max(...spans.map((x) => x.b)) >= 3600;
+  const rows = spans.map(({ s, a, b }) => `    ${s.name.replace(/[:;#]/g, " ")} :s${s.number}, ${clock(a)}, ${clock(b)}`);
+  return [
+    "```mermaid",
+    "gantt",
+    "    title Steps",
+    "    dateFormat HH:mm:ss",
+    `    axisFormat ${long ? "%H:%M:%S" : "%M:%S"}`,
+    "    section job",
+    ...rows,
+    "```"
+  ].join("\n");
 }
 function mermaidTimeline(meta2, points2, steps2) {
   const t0 = meta2.startedAt;
   const mb = (v) => v === void 0 ? void 0 : v / 1048576;
   const parts = [
     cpuChart(points2, t0, meta2.cpus),
-    chart({ title: "\u{1F9E0} Memory", unit: "%", points: points2, t0, max: 100, bars: true, series: [{ name: "used", color: "#a855f7", pick: (p) => 100 * p.memUsed / p.memTotal }] }),
+    chart({ title: "\u{1F9E0} Memory", unit: "%", points: points2, t0, max: 100, series: [{ name: "used", color: "#a855f7", pick: (p) => 100 * p.memUsed / p.memTotal }] }),
     chart({
       title: "\u{1F4BE} Disk MB/s",
       unit: "",
