@@ -7,7 +7,7 @@ permissions:
   actions: read   # for the per-step breakdown
 
 steps:
-  - uses: ingarabr/gha-ekg@v0   # first step in the job
+  - uses: ingarabr/gha-ekg@v1   # first step in the job
   - run: ./build.sh
 ```
 
@@ -44,7 +44,7 @@ Set `output` to choose how the timeline is drawn in the job summary. The overvie
 | `mermaid` | Rendered charts: CPU as one line per core plus a total on a cores axis, memory as bars, disk and network as read/write and rx/tx lines, and a gantt chart of the steps. Charts are downsampled to about 30 points. |
 
 ```yaml
-- uses: ingarabr/gha-ekg@v0
+- uses: ingarabr/gha-ekg@v1
   with:
     output: mermaid
 ```
