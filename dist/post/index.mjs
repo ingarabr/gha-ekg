@@ -127180,6 +127180,19 @@ function bucket(points2, t0, pick) {
   }
   return { x, y };
 }
+var MAX_TICKS = 10;
+function clockLabel(sec, span) {
+  const p = (n) => String(n).padStart(2, "0");
+  if (span < 120) return `${sec}s`;
+  if (span < 3600) return `${Math.floor(sec / 60)}:${p(sec % 60)}`;
+  return `${Math.floor(sec / 3600)}:${p(Math.floor(sec % 3600 / 60))}`;
+}
+function xAxis(x) {
+  const every = Math.ceil(x.length / MAX_TICKS);
+  const span = x.at(-1) ?? 0;
+  const labels = x.map((sec, i) => (x.length - 1 - i) % every === 0 ? clockLabel(sec, span) : "\u200B".repeat(i + 1));
+  return `    x-axis "time" [${labels.map((l) => JSON.stringify(l)).join(", ")}]`;
+}
 function theme(colors) {
   const axis = ["xAxisLabel", "xAxisTitle", "xAxisTick", "xAxisLine", "yAxisLabel", "yAxisTitle", "yAxisTick", "yAxisLine"];
   return [
@@ -127215,7 +127228,7 @@ function chart(o) {
     theme(palette),
     "xychart-beta",
     `    title "${title}"`,
-    `    x-axis "seconds" [${data[0].x.join(", ")}]`,
+    xAxis(data[0].x),
     `    y-axis "${o.unit}" 0 --> ${top}`,
     ...marks.map((m) => `    ${m}`),
     "```"
@@ -127248,7 +127261,7 @@ function cpuChart(points2, t0, cpus2) {
     theme(palette),
     "xychart-beta",
     `    title "${title}"`,
-    `    x-axis "seconds" [${data[0].x.join(", ")}]`,
+    xAxis(data[0].x),
     '    y-axis "%" 0 --> 100',
     ...bars,
     "```"
