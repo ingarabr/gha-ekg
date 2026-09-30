@@ -2,6 +2,7 @@ import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { appendSummary, getInput, getState, warning } from "./actions.ts";
 import { toPoints } from "./analyze.ts";
+import { artifactName } from "./artifact.ts";
 import { collect } from "./collectors/index.ts";
 import { renderReport, type OutputFormat } from "./render.ts";
 import { fetchSteps } from "./steps.ts";
@@ -50,8 +51,7 @@ if (getInput("job-summary", "true") === "true") {
 if (getInput("upload-artifact", "true") === "true") {
   try {
     const { DefaultArtifactClient } = await import("@actions/artifact");
-    const name = `gha-ekg-${(process.env.RUNNER_NAME ?? "runner").replace(/[^A-Za-z0-9._-]/g, "-")}`;
-    await new DefaultArtifactClient().uploadArtifact(name, [samplesFile, join(dir, "meta.json")], dir, { retentionDays: 14 });
+    await new DefaultArtifactClient().uploadArtifact(artifactName(), [samplesFile, join(dir, "meta.json")], dir, { retentionDays: 14 });
   } catch (e) {
     warning(`gha-ekg: artifact upload failed: ${(e as Error).message}`);
   }

@@ -126527,7 +126527,7 @@ var require_get_artifact = __commonJS({
     var artifact_twirp_client_1 = require_artifact_twirp_client2();
     var generated_1 = require_generated();
     var errors_1 = require_errors2();
-    function getArtifactPublic(artifactName, workflowRunId, repositoryOwner, repositoryName, token2) {
+    function getArtifactPublic(artifactName2, workflowRunId, repositoryOwner, repositoryName, token2) {
       var _a5;
       return __awaiter2(this, void 0, void 0, function* () {
         const [retryOpts, requestOpts] = (0, retry_options_1.getRetryOptions)(utils_1.defaults);
@@ -126543,13 +126543,13 @@ var require_get_artifact = __commonJS({
           owner: repositoryOwner,
           repo: repositoryName,
           run_id: workflowRunId,
-          name: artifactName
+          name: artifactName2
         });
         if (getArtifactResp.status !== 200) {
           throw new errors_1.InvalidResponseError(`Invalid response from GitHub API: ${getArtifactResp.status} (${(_a5 = getArtifactResp === null || getArtifactResp === void 0 ? void 0 : getArtifactResp.headers) === null || _a5 === void 0 ? void 0 : _a5["x-github-request-id"]})`);
         }
         if (getArtifactResp.data.artifacts.length === 0) {
-          throw new errors_1.ArtifactNotFoundError(`Artifact not found for name: ${artifactName}
+          throw new errors_1.ArtifactNotFoundError(`Artifact not found for name: ${artifactName2}
         Please ensure that your artifact is not expired and the artifact was uploaded using a compatible version of toolkit/upload-artifact.
         For more information, visit the GitHub Artifacts FAQ: https://github.com/actions/toolkit/blob/main/packages/artifact/docs/faq.md`);
         }
@@ -126570,7 +126570,7 @@ var require_get_artifact = __commonJS({
       });
     }
     exports.getArtifactPublic = getArtifactPublic;
-    function getArtifactInternal(artifactName) {
+    function getArtifactInternal(artifactName2) {
       var _a5;
       return __awaiter2(this, void 0, void 0, function* () {
         const artifactClient = (0, artifact_twirp_client_1.internalArtifactTwirpClient)();
@@ -126578,11 +126578,11 @@ var require_get_artifact = __commonJS({
         const req = {
           workflowRunBackendId,
           workflowJobRunBackendId,
-          nameFilter: generated_1.StringValue.create({ value: artifactName })
+          nameFilter: generated_1.StringValue.create({ value: artifactName2 })
         };
         const res = yield artifactClient.ListArtifacts(req);
         if (res.artifacts.length === 0) {
-          throw new errors_1.ArtifactNotFoundError(`Artifact not found for name: ${artifactName}
+          throw new errors_1.ArtifactNotFoundError(`Artifact not found for name: ${artifactName2}
         Please ensure that your artifact is not expired and the artifact was uploaded using a compatible version of toolkit/upload-artifact.
         For more information, visit the GitHub Artifacts FAQ: https://github.com/actions/toolkit/blob/main/packages/artifact/docs/faq.md`);
         }
@@ -126651,7 +126651,7 @@ var require_delete_artifact = __commonJS({
     var generated_1 = require_generated();
     var get_artifact_1 = require_get_artifact();
     var errors_1 = require_errors2();
-    function deleteArtifactPublic(artifactName, workflowRunId, repositoryOwner, repositoryName, token2) {
+    function deleteArtifactPublic(artifactName2, workflowRunId, repositoryOwner, repositoryName, token2) {
       var _a5;
       return __awaiter2(this, void 0, void 0, function* () {
         const [retryOpts, requestOpts] = (0, retry_options_1.getRetryOptions)(utils_1.defaults);
@@ -126663,7 +126663,7 @@ var require_delete_artifact = __commonJS({
           request: requestOpts
         };
         const github = (0, github_1.getOctokit)(token2, opts, plugin_retry_1.retry, plugin_request_log_1.requestLog);
-        const getArtifactResp = yield (0, get_artifact_1.getArtifactPublic)(artifactName, workflowRunId, repositoryOwner, repositoryName, token2);
+        const getArtifactResp = yield (0, get_artifact_1.getArtifactPublic)(artifactName2, workflowRunId, repositoryOwner, repositoryName, token2);
         const deleteArtifactResp = yield github.rest.actions.deleteArtifact({
           owner: repositoryOwner,
           repo: repositoryName,
@@ -126678,18 +126678,18 @@ var require_delete_artifact = __commonJS({
       });
     }
     exports.deleteArtifactPublic = deleteArtifactPublic;
-    function deleteArtifactInternal(artifactName) {
+    function deleteArtifactInternal(artifactName2) {
       return __awaiter2(this, void 0, void 0, function* () {
         const artifactClient = (0, artifact_twirp_client_1.internalArtifactTwirpClient)();
         const { workflowRunBackendId, workflowJobRunBackendId } = (0, util_1.getBackendIdsFromToken)();
         const listReq = {
           workflowRunBackendId,
           workflowJobRunBackendId,
-          nameFilter: generated_1.StringValue.create({ value: artifactName })
+          nameFilter: generated_1.StringValue.create({ value: artifactName2 })
         };
         const listRes = yield artifactClient.ListArtifacts(listReq);
         if (listRes.artifacts.length === 0) {
-          throw new errors_1.ArtifactNotFoundError(`Artifact not found for name: ${artifactName}`);
+          throw new errors_1.ArtifactNotFoundError(`Artifact not found for name: ${artifactName2}`);
         }
         let artifact = listRes.artifacts[0];
         if (listRes.artifacts.length > 1) {
@@ -126702,7 +126702,7 @@ var require_delete_artifact = __commonJS({
           name: artifact.name
         };
         const res = yield artifactClient.DeleteArtifact(req);
-        (0, core_1.info)(`Artifact '${artifactName}' (ID: ${res.artifactId}) deleted`);
+        (0, core_1.info)(`Artifact '${artifactName2}' (ID: ${res.artifactId}) deleted`);
         return {
           id: Number(res.artifactId)
         };
@@ -126980,7 +126980,7 @@ If the error persists, please check whether Actions and API requests are operati
           }
         });
       }
-      getArtifact(artifactName, options) {
+      getArtifact(artifactName2, options) {
         return __awaiter2(this, void 0, void 0, function* () {
           try {
             if ((0, config_1.isGhes)()) {
@@ -126988,9 +126988,9 @@ If the error persists, please check whether Actions and API requests are operati
             }
             if (options === null || options === void 0 ? void 0 : options.findBy) {
               const { findBy: { workflowRunId, repositoryOwner, repositoryName, token: token2 } } = options;
-              return (0, get_artifact_1.getArtifactPublic)(artifactName, workflowRunId, repositoryOwner, repositoryName, token2);
+              return (0, get_artifact_1.getArtifactPublic)(artifactName2, workflowRunId, repositoryOwner, repositoryName, token2);
             }
-            return (0, get_artifact_1.getArtifactInternal)(artifactName);
+            return (0, get_artifact_1.getArtifactInternal)(artifactName2);
           } catch (error) {
             (0, core_1.warning)(`Get Artifact failed with error: ${error}.
 
@@ -127001,7 +127001,7 @@ If the error persists, please check whether Actions and API requests are operati
           }
         });
       }
-      deleteArtifact(artifactName, options) {
+      deleteArtifact(artifactName2, options) {
         return __awaiter2(this, void 0, void 0, function* () {
           try {
             if ((0, config_1.isGhes)()) {
@@ -127009,9 +127009,9 @@ If the error persists, please check whether Actions and API requests are operati
             }
             if (options === null || options === void 0 ? void 0 : options.findBy) {
               const { findBy: { repositoryOwner, repositoryName, workflowRunId, token: token2 } } = options;
-              return (0, delete_artifact_1.deleteArtifactPublic)(artifactName, workflowRunId, repositoryOwner, repositoryName, token2);
+              return (0, delete_artifact_1.deleteArtifactPublic)(artifactName2, workflowRunId, repositoryOwner, repositoryName, token2);
             }
-            return (0, delete_artifact_1.deleteArtifactInternal)(artifactName);
+            return (0, delete_artifact_1.deleteArtifactInternal)(artifactName2);
           } catch (error) {
             (0, core_1.warning)(`Delete Artifact failed with error: ${error}.
 
@@ -127135,6 +127135,12 @@ function summarize(points2) {
 }
 function pointsInStep(points2, step) {
   return points2.filter((p) => p.t > step.start && p.t <= step.end);
+}
+
+// src/artifact.ts
+function artifactName(env = process.env) {
+  const { GITHUB_JOB = "job", RUNNER_NAME = "runner" } = env;
+  return ["gha-ekg", GITHUB_JOB, RUNNER_NAME].map((part) => part.replace(/[^A-Za-z0-9._-]/g, "-")).join("-");
 }
 
 // src/collectors/index.ts
@@ -127458,8 +127464,7 @@ if (getInput("job-summary", "true") === "true") {
 if (getInput("upload-artifact", "true") === "true") {
   try {
     const { DefaultArtifactClient } = await Promise.resolve().then(() => __toESM(require_artifact2(), 1));
-    const name = `gha-ekg-${(process.env.RUNNER_NAME ?? "runner").replace(/[^A-Za-z0-9._-]/g, "-")}`;
-    await new DefaultArtifactClient().uploadArtifact(name, [samplesFile, join(dir, "meta.json")], dir, { retentionDays: 14 });
+    await new DefaultArtifactClient().uploadArtifact(artifactName(), [samplesFile, join(dir, "meta.json")], dir, { retentionDays: 14 });
   } catch (e) {
     warning(`gha-ekg: artifact upload failed: ${e.message}`);
   }
