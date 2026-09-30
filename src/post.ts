@@ -3,8 +3,10 @@ import { join } from "node:path";
 import { appendSummary, getInput, getState, warning } from "./actions.ts";
 import { toPoints } from "./analyze.ts";
 import { collect } from "./collectors/index.ts";
-import { renderReport, type OutputFormat } from "./render.ts";
-import { fetchSteps } from "./steps.ts";
+import { createCheckRun } from "./checkrun.ts";
+import { deliver, parseDestination } from "./deliver.ts";
+import { headline, renderReport } from "./render.ts";
+import { fetchJob } from "./steps.ts";
 import type { Meta, Sample, Step } from "./types.ts";
 
 const dir = getState("dir");
@@ -31,21 +33,34 @@ const samples = readFileSync(samplesFile, "utf8")
 const points = toPoints(samples);
 
 let steps: Step[] | undefined;
+let jobName = process.env.GITHUB_JOB ?? "job";
 let note: string | undefined;
 const token = getInput("github-token");
 if (token) {
   try {
-    steps = await fetchSteps(token);
+    const job = await fetchJob(token);
+    steps = job.steps;
+    jobName = job.name;
   } catch (e) {
     note = `Step breakdown unavailable: ${(e as Error).message}. The token needs \`actions: read\`.`;
   }
 }
 
-if (getInput("job-summary", "true") === "true") {
-  const format = getInput("output", "ascii");
-  if (format !== "ascii" && format !== "mermaid") warning(`gha-ekg: unknown output "${format}", using ascii`);
-  appendSummary(renderReport(meta, points, steps, note, format === "mermaid" ? "mermaid" : "ascii"));
-}
+const format = getInput("output", "ascii");
+if (format !== "ascii" && format !== "mermaid") warning(`gha-ekg: unknown output "${format}", using ascii`);
+const destination = parseDestination(getInput("report-to", "summary"));
+if (!destination) warning(`gha-ekg: unknown report-to "${getInput("report-to")}", using summary`);
+
+await deliver({
+  destination: destination ?? "summary",
+  report: () => renderReport(meta, points, steps, note, format === "mermaid" ? "mermaid" : "ascii"),
+  createCheck: async (report) => {
+    if (!token) throw new Error("no github-token");
+    return createCheckRun(token, { name: `gha-ekg · ${jobName}`, title: headline(points), summary: report });
+  },
+  appendSummary,
+  warn: warning,
+});
 
 if (getInput("upload-artifact", "true") === "true") {
   try {

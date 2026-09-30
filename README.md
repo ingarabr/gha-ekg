@@ -30,9 +30,9 @@ node scripts/render-demo.ts artifacts jobs.json docs/demo.md
 |---|---|---|
 | `interval` | `5` | Sampling interval in seconds |
 | `output` | `ascii` | Chart format in the summary: `ascii` (sparklines) or `mermaid` (line and bar charts, per-core CPU, step gantt) |
-| `job-summary` | `true` | Write the report to the job summary |
+| `report-to` | `summary` | Where the report goes: `summary`, `check`, `both` or `none` (see below) |
 | `upload-artifact` | `true` | Upload `samples.jsonl` and `meta.json` as an artifact |
-| `github-token` | `${{ github.token }}` | Used to read step timings. Empty disables the step breakdown |
+| `github-token` | `${{ github.token }}` | Reads step timings (`actions: read`) and creates the check run (`checks: write`). Empty disables both |
 
 ## Output formats
 
@@ -50,6 +50,30 @@ Set `output` to choose how the timeline is drawn in the job summary. The overvie
 ```
 
 Mermaid renders one iframe per chart, so for jobs that produce many summaries (large matrices) `ascii` is the lighter choice. The raw samples are always available in the artifact, independent of the chosen format.
+
+## Where the report goes
+
+`report-to` picks the destination:
+
+| Value | Result |
+|---|---|
+| `summary` (default) | The report is written to the job summary. Needs no extra permissions. |
+| `check` | The report becomes a check run named `gha-ekg · <job>` with its own details page, shown in the pull request's checks. The job summary only gets a link to it. |
+| `both` | The full report in the job summary plus the check run. |
+| `none` | No report. Samples are still uploaded as an artifact. |
+
+Creating a check run needs `checks: write`, and pull requests from forks get a read-only token. When the check run cannot be created, the report is written to the job summary instead and a warning explains why, so it is never lost.
+
+```yaml
+permissions:
+  actions: read
+  checks: write
+
+steps:
+  - uses: ingarabr/gha-ekg@v0
+    with:
+      report-to: check
+```
 
 ## How it works
 

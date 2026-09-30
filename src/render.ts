@@ -98,3 +98,9 @@ export function renderReport(meta: Meta, points: Point[], steps: Step[] | undefi
   }
   return parts.join("\n\n");
 }
+
+export function headline(points: Point[]): string {
+  const s = summarize(points);
+  if (!s) return "Not enough samples";
+  return `CPU avg ${pct(s.cpuAvg)}, peak ${pct(s.cpuPeak)} · memory peak ${bytes(s.memPeak)} (${pct(s.memPeakPct)})`;
+}

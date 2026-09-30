@@ -28273,11 +28273,11 @@ var require_bytesEncoding = __commonJS({
       uint8ArrayToString: () => uint8ArrayToString2
     });
     module.exports = __toCommonJS2(bytesEncoding_exports);
-    function uint8ArrayToString2(bytes2, format) {
-      return Buffer.from(bytes2).toString(format);
+    function uint8ArrayToString2(bytes2, format2) {
+      return Buffer.from(bytes2).toString(format2);
     }
-    function stringToUint8Array2(value, format) {
-      return Buffer.from(value, format);
+    function stringToUint8Array2(value, format2) {
+      return Buffer.from(value, format2);
     }
   }
 });
@@ -29765,12 +29765,12 @@ var require_common = __commonJS({
             args.unshift("%O");
           }
           let index = 0;
-          args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
+          args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format2) => {
             if (match === "%%") {
               return "%";
             }
             index++;
-            const formatter = createDebug.formatters[format];
+            const formatter = createDebug.formatters[format2];
             if (typeof formatter === "function") {
               const val = args[index];
               match = formatter.call(self2, val);
@@ -34204,11 +34204,11 @@ var require_commonjs6 = __commonJS({
     var isNodeRuntime2 = tspRuntime.isNodeRuntime;
     var isReactNative2 = tspRuntime.isReactNative;
     var isWebWorker2 = tspRuntime.isWebWorker;
-    function uint8ArrayToString2(bytes2, format) {
-      return tspRuntime.uint8ArrayToString(bytes2, format);
+    function uint8ArrayToString2(bytes2, format2) {
+      return tspRuntime.uint8ArrayToString(bytes2, format2);
     }
-    function stringToUint8Array2(value, format) {
-      return tspRuntime.stringToUint8Array(value, format);
+    function stringToUint8Array2(value, format2) {
+      return tspRuntime.stringToUint8Array(value, format2);
     }
   }
 });
@@ -84335,7 +84335,7 @@ var require_utils5 = __commonJS({
       streamToBuffer3: () => streamToBuffer3
     });
     module.exports = __toCommonJS2(utils_exports);
-    var import_node_fs3 = __toESM2(__require("node:fs"));
+    var import_node_fs4 = __toESM2(__require("node:fs"));
     var import_node_util = __toESM2(__require("node:util"));
     var import_constants3 = require_constants9();
     async function streamToBuffer(stream, buffer, offset, end, encoding) {
@@ -84422,7 +84422,7 @@ var require_utils5 = __commonJS({
     }
     async function readStreamToLocalFile(rs, file) {
       return new Promise((resolve, reject) => {
-        const ws = import_node_fs3.default.createWriteStream(file);
+        const ws = import_node_fs4.default.createWriteStream(file);
         rs.on("error", (err) => {
           reject(err);
         });
@@ -84433,8 +84433,8 @@ var require_utils5 = __commonJS({
         rs.pipe(ws);
       });
     }
-    var fsStat = import_node_util.default.promisify(import_node_fs3.default.stat);
-    var fsCreateReadStream = import_node_fs3.default.createReadStream;
+    var fsStat = import_node_util.default.promisify(import_node_fs4.default.stat);
+    var fsCreateReadStream = import_node_fs4.default.createReadStream;
   }
 });
 
@@ -97343,10 +97343,10 @@ var require_lazystream = __commonJS({
         return new Writable(fn, options);
       PassThrough.call(this, options);
       beforeFirstCall(this, "_write", function() {
-        var destination = fn.call(this, options);
+        var destination2 = fn.call(this, options);
         var emit = this.emit.bind(this, "error");
-        destination.on("error", emit);
-        this.pipe(destination);
+        destination2.on("error", emit);
+        this.pipe(destination2);
       });
       this.emit("writable");
     }
@@ -98239,8 +98239,8 @@ var require_inspect2 = __commonJS({
   "node_modules/readable-stream/lib/ours/util/inspect.js"(exports, module) {
     "use strict";
     module.exports = {
-      format(format, ...args) {
-        return format.replace(/%([sdifj])/g, function(...[_unused, type]) {
+      format(format2, ...args) {
+        return format2.replace(/%([sdifj])/g, function(...[_unused, type]) {
           const replacement = args.shift();
           if (type === "f") {
             return replacement.toFixed(6);
@@ -98289,7 +98289,7 @@ var require_inspect2 = __commonJS({
 var require_errors3 = __commonJS({
   "node_modules/readable-stream/lib/ours/errors.js"(exports, module) {
     "use strict";
-    var { format, inspect } = require_inspect2();
+    var { format: format2, inspect } = require_inspect2();
     var { AggregateError: CustomAggregateError } = require_primordials();
     var AggregateError = globalThis.AggregateError || CustomAggregateError;
     var kIsNodeError = Symbol("kIsNodeError");
@@ -98339,7 +98339,7 @@ var require_errors3 = __commonJS({
       if (args.length === 0) {
         return msg;
       }
-      return format(msg, ...args);
+      return format2(msg, ...args);
     }
     function E(code, message, Base) {
       if (!Base) {
@@ -99276,7 +99276,7 @@ var require_util11 = __commonJS({
   "node_modules/readable-stream/lib/ours/util.js"(exports, module) {
     "use strict";
     var bufferModule = __require("buffer");
-    var { format, inspect } = require_inspect2();
+    var { format: format2, inspect } = require_inspect2();
     var {
       codes: { ERR_INVALID_ARG_TYPE }
     } = require_errors3();
@@ -99341,7 +99341,7 @@ var require_util11 = __commonJS({
         return function() {
         };
       },
-      format,
+      format: format2,
       inspect,
       types: {
         isAsyncFunction(fn) {
@@ -112478,13 +112478,13 @@ var require_core2 = __commonJS({
     var ArchiverError = require_error3();
     var Transform = require_ours().Transform;
     var win32 = process.platform === "win32";
-    var Archiver = function(format, options) {
+    var Archiver = function(format2, options) {
       if (!(this instanceof Archiver)) {
-        return new Archiver(format, options);
+        return new Archiver(format2, options);
       }
-      if (typeof format !== "string") {
-        options = format;
-        format = "zip";
+      if (typeof format2 !== "string") {
+        options = format2;
+        format2 = "zip";
       }
       options = this.options = util2.defaults(options, {
         highWaterMark: 1024 * 1024,
@@ -112937,12 +112937,12 @@ var require_core2 = __commonJS({
         });
       });
     };
-    Archiver.prototype.setFormat = function(format) {
+    Archiver.prototype.setFormat = function(format2) {
       if (this._format) {
         this.emit("error", new ArchiverError("FORMATSET"));
         return this;
       }
-      this._format = format;
+      this._format = format2;
       return this;
     };
     Archiver.prototype.setModule = function(module2) {
@@ -116682,9 +116682,9 @@ var require_tar = __commonJS({
     Tar.prototype.on = function() {
       return this.engine.on.apply(this.engine, arguments);
     };
-    Tar.prototype.pipe = function(destination, options) {
+    Tar.prototype.pipe = function(destination2, options) {
       if (this.compressor) {
-        return this.engine.pipe.apply(this.engine, [this.compressor]).pipe(destination, options);
+        return this.engine.pipe.apply(this.engine, [this.compressor]).pipe(destination2, options);
       } else {
         return this.engine.pipe.apply(this.engine, arguments);
       }
@@ -117067,33 +117067,33 @@ var require_archiver = __commonJS({
   "node_modules/archiver/index.js"(exports, module) {
     var Archiver = require_core2();
     var formats = {};
-    var vending = function(format, options) {
-      return vending.create(format, options);
+    var vending = function(format2, options) {
+      return vending.create(format2, options);
     };
-    vending.create = function(format, options) {
-      if (formats[format]) {
-        var instance8 = new Archiver(format, options);
-        instance8.setFormat(format);
-        instance8.setModule(new formats[format](options));
+    vending.create = function(format2, options) {
+      if (formats[format2]) {
+        var instance8 = new Archiver(format2, options);
+        instance8.setFormat(format2);
+        instance8.setModule(new formats[format2](options));
         return instance8;
       } else {
-        throw new Error("create(" + format + "): format not registered");
+        throw new Error("create(" + format2 + "): format not registered");
       }
     };
-    vending.registerFormat = function(format, module2) {
-      if (formats[format]) {
-        throw new Error("register(" + format + "): format already registered");
+    vending.registerFormat = function(format2, module2) {
+      if (formats[format2]) {
+        throw new Error("register(" + format2 + "): format already registered");
       }
       if (typeof module2 !== "function") {
-        throw new Error("register(" + format + "): format module invalid");
+        throw new Error("register(" + format2 + "): format module invalid");
       }
       if (typeof module2.prototype.append !== "function" || typeof module2.prototype.finalize !== "function") {
-        throw new Error("register(" + format + "): format module missing methods");
+        throw new Error("register(" + format2 + "): format module missing methods");
       }
-      formats[format] = module2;
+      formats[format2] = module2;
     };
-    vending.isRegisteredFormat = function(format) {
-      if (formats[format]) {
+    vending.isRegisteredFormat = function(format2) {
+      if (formats[format2]) {
         return true;
       }
       return false;
@@ -117889,8 +117889,8 @@ var require_dist_node2 = __commonJS({
         if (options.mediaType.previews.length) {
           const previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
           headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
-            const format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
-            return `application/vnd.github.${preview}-preview${format}`;
+            const format2 = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
+            return `application/vnd.github.${preview}-preview${format2}`;
           }).join(",");
         }
       }
@@ -120708,14 +120708,14 @@ var require_lib4 = __commonJS({
     AbortError2.prototype.name = "AbortError";
     var URL$1 = Url.URL || whatwgUrl.URL;
     var PassThrough$1 = Stream.PassThrough;
-    var isDomainOrSubdomain = function isDomainOrSubdomain2(destination, original) {
+    var isDomainOrSubdomain = function isDomainOrSubdomain2(destination2, original) {
       const orig = new URL$1(original).hostname;
-      const dest = new URL$1(destination).hostname;
+      const dest = new URL$1(destination2).hostname;
       return orig === dest || orig[orig.length - dest.length - 1] === "." && orig.endsWith(dest);
     };
-    var isSameProtocol = function isSameProtocol2(destination, original) {
+    var isSameProtocol = function isSameProtocol2(destination2, original) {
       const orig = new URL$1(original).protocol;
-      const dest = new URL$1(destination).protocol;
+      const dest = new URL$1(destination2).protocol;
       return orig === dest;
     };
     function fetch2(url, opts) {
@@ -127066,7 +127066,7 @@ var require_artifact2 = __commonJS({
 });
 
 // src/post.ts
-import { appendFileSync as appendFileSync2, existsSync, readFileSync } from "node:fs";
+import { appendFileSync as appendFileSync2, existsSync, readFileSync as readFileSync2 } from "node:fs";
 import { join } from "node:path";
 
 // src/actions.ts
@@ -127149,6 +127149,64 @@ async function collect4() {
     default:
       throw new Error(`unsupported platform: ${process.platform}`);
   }
+}
+
+// src/checkrun.ts
+import { readFileSync } from "node:fs";
+var MAX_TEXT = 65e3;
+function headSha(env) {
+  try {
+    const event = JSON.parse(readFileSync(env.GITHUB_EVENT_PATH ?? "", "utf8"));
+    if (event.pull_request?.head?.sha) return event.pull_request.head.sha;
+  } catch {
+  }
+  return env.GITHUB_SHA ?? "";
+}
+async function createCheckRun(token2, input, env = process.env) {
+  const { GITHUB_API_URL = "https://api.github.com", GITHUB_REPOSITORY } = env;
+  const summary = input.summary.length > MAX_TEXT ? input.summary.slice(0, MAX_TEXT) + "\n\n_Report truncated._" : input.summary;
+  const res = await fetch(`${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/check-runs`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token2}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: input.name,
+      head_sha: headSha(env),
+      status: "completed",
+      conclusion: "neutral",
+      output: { title: input.title, summary }
+    }),
+    signal: AbortSignal.timeout(15e3)
+  });
+  if (!res.ok) {
+    const hint = res.status === 403 || res.status === 404 ? " (the token needs `checks: write`; tokens for pull requests from forks are read-only)" : "";
+    throw new Error(`check runs API returned ${res.status}${hint}`);
+  }
+  return (await res.json()).html_url;
+}
+
+// src/deliver.ts
+function parseDestination(value) {
+  return value === "summary" || value === "check" || value === "both" || value === "none" ? value : void 0;
+}
+async function deliver(d) {
+  if (d.destination === "none") return;
+  const report = d.report();
+  let checkUrl;
+  if (d.destination === "check" || d.destination === "both") {
+    try {
+      checkUrl = await d.createCheck(report);
+    } catch (e) {
+      d.warn(`gha-ekg: could not create a check run (${e.message}); writing the report to the job summary instead`);
+    }
+  }
+  const fullSummary = d.destination === "summary" || d.destination === "both" || !checkUrl;
+  const link = checkUrl ? `[gha-ekg check run](${checkUrl})` : "";
+  d.appendSummary(fullSummary ? [report, link].filter(Boolean).join("\n\n") : `gha-ekg report: ${link}`);
 }
 
 // src/mermaid.ts
@@ -127393,13 +127451,13 @@ function stepTable(points2, steps2) {
   }
   return rows.join("\n");
 }
-function renderReport(meta2, points2, steps2, note2, format = "ascii") {
+function renderReport(meta2, points2, steps2, note2, format2 = "ascii") {
   const s = summarize(points2);
   const head = `## gha-ekg \xB7 ${meta2.platform}/${meta2.arch}`;
   if (!s) return `${head}
 
 Not enough samples collected (job shorter than one interval).`;
-  const chartBlock = format === "mermaid" ? mermaidTimeline(meta2, points2, steps2) : timeline(points2);
+  const chartBlock = format2 === "mermaid" ? mermaidTimeline(meta2, points2, steps2) : timeline(points2);
   const parts = [head, overview(meta2, s, points2), "### Timeline", chartBlock];
   if (steps2 && steps2.length > 0) {
     parts.push("### Steps", stepTable(points2, steps2), "_Steps shorter than the sampling interval have no samples._");
@@ -127408,9 +127466,14 @@ Not enough samples collected (job shorter than one interval).`;
   }
   return parts.join("\n\n");
 }
+function headline(points2) {
+  const s = summarize(points2);
+  if (!s) return "Not enough samples";
+  return `CPU avg ${pct(s.cpuAvg)}, peak ${pct(s.cpuPeak)} \xB7 memory peak ${bytes(s.memPeak)} (${pct(s.memPeakPct)})`;
+}
 
 // src/steps.ts
-async function fetchSteps(token2, env = process.env) {
+async function fetchJob(token2, env = process.env) {
   const { GITHUB_API_URL = "https://api.github.com", GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_RUN_ATTEMPT = "1", RUNNER_NAME } = env;
   const url = `${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}/jobs?per_page=100`;
   const res = await fetch(url, {
@@ -127421,7 +127484,8 @@ async function fetchSteps(token2, env = process.env) {
   const { jobs } = await res.json();
   const job = jobs.find((j) => j.runner_name === RUNNER_NAME && j.status === "in_progress");
   if (!job?.steps) throw new Error("current job not found in jobs API response");
-  return job.steps.filter((s) => s.started_at && s.completed_at && s.conclusion !== "skipped").map((s) => ({ number: s.number, name: s.name, start: Date.parse(s.started_at), end: Date.parse(s.completed_at) }));
+  const steps2 = job.steps.filter((s) => s.started_at && s.completed_at && s.conclusion !== "skipped").map((s) => ({ number: s.number, name: s.name, start: Date.parse(s.started_at), end: Date.parse(s.completed_at) }));
+  return { name: job.name, steps: steps2 };
 }
 
 // src/post.ts
@@ -127437,24 +127501,36 @@ try {
 }
 var samplesFile = join(dir, "samples.jsonl");
 appendFileSync2(samplesFile, JSON.stringify({ t: Date.now(), ...await collect4() }) + "\n");
-var meta = JSON.parse(readFileSync(join(dir, "meta.json"), "utf8"));
-var samples = readFileSync(samplesFile, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+var meta = JSON.parse(readFileSync2(join(dir, "meta.json"), "utf8"));
+var samples = readFileSync2(samplesFile, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
 var points = toPoints(samples);
 var steps;
+var jobName = process.env.GITHUB_JOB ?? "job";
 var note;
 var token = getInput("github-token");
 if (token) {
   try {
-    steps = await fetchSteps(token);
+    const job = await fetchJob(token);
+    steps = job.steps;
+    jobName = job.name;
   } catch (e) {
     note = `Step breakdown unavailable: ${e.message}. The token needs \`actions: read\`.`;
   }
 }
-if (getInput("job-summary", "true") === "true") {
-  const format = getInput("output", "ascii");
-  if (format !== "ascii" && format !== "mermaid") warning(`gha-ekg: unknown output "${format}", using ascii`);
-  appendSummary(renderReport(meta, points, steps, note, format === "mermaid" ? "mermaid" : "ascii"));
-}
+var format = getInput("output", "ascii");
+if (format !== "ascii" && format !== "mermaid") warning(`gha-ekg: unknown output "${format}", using ascii`);
+var destination = parseDestination(getInput("report-to", "summary"));
+if (!destination) warning(`gha-ekg: unknown report-to "${getInput("report-to")}", using summary`);
+await deliver({
+  destination: destination ?? "summary",
+  report: () => renderReport(meta, points, steps, note, format === "mermaid" ? "mermaid" : "ascii"),
+  createCheck: async (report) => {
+    if (!token) throw new Error("no github-token");
+    return createCheckRun(token, { name: `gha-ekg \xB7 ${jobName}`, title: headline(points), summary: report });
+  },
+  appendSummary,
+  warn: warning
+});
 if (getInput("upload-artifact", "true") === "true") {
   try {
     const { DefaultArtifactClient } = await Promise.resolve().then(() => __toESM(require_artifact2(), 1));

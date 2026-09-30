@@ -9,14 +9,14 @@ inputs:
     description: Upload the raw samples as a JSONL artifact
     default: "true"
   github-token:
-    description: Token used to read step timings for the per-step breakdown (needs actions read). Empty disables it.
+    description: Token used to read step timings (needs actions read) and to create the check run (needs checks write). Empty disables both.
     default: ${{ github.token }}
   output:
     description: "Chart format in the job summary: ascii or mermaid"
     default: ascii
-  job-summary:
-    description: Write the report to the job summary
-    default: "true"
+  report-to:
+    description: "Where the report goes: summary, check (falls back to the job summary if the check run cannot be created; needs checks write), both or none"
+    default: summary
 runs:
   using: node24
   main: dist/main/index.mjs

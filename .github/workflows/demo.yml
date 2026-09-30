@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   actions: read
+  checks: write
 
 jobs:
   demo:
@@ -16,10 +17,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, output: ascii }
-          - { os: ubuntu-24.04-arm, output: mermaid }
-          - { os: macos-latest, output: mermaid }
-          - { os: windows-latest, output: ascii }
+          - { os: ubuntu-latest, output: ascii, report-to: summary }
+          - { os: ubuntu-24.04-arm, output: mermaid, report-to: check }
+          - { os: macos-latest, output: mermaid, report-to: both }
+          - { os: windows-latest, output: ascii, report-to: check }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -27,6 +28,7 @@ jobs:
         with:
           interval: 2
           output: ${{ matrix.output }}
+          report-to: ${{ matrix.report-to }}
       - name: Idle
         shell: bash
         run: sleep 6
@@ -36,3 +38,18 @@ jobs:
       - name: Cool down
         shell: bash
         run: sleep 6
+
+  fallback:
+    name: fallback (no checks permission)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./
+        with:
+          interval: 2
+          report-to: check
+      - name: Workload
+        shell: bash
+        run: node demo/workload.mjs 12
