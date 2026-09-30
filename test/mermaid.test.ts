@@ -63,3 +63,15 @@ test("more than eight cores are grouped into eight layers", () => {
   assert.match(md, /🟦1-2/);
   assert.equal([...cpuBlock(md).matchAll(/^ +bar \[/gm)].length, 8);
 });
+
+test("x-axis of a long job has few, unique, human-readable labels", () => {
+  const at = (t: number) => ({ t, cpuBusy: 0, cpuTotal: t, memUsed: 1, memTotal: 2 });
+  const samples = Array.from({ length: 481 }, (_, i) => at(i * 5000));
+  const md = renderReport({ ...meta, cpus: 1 }, toPoints(samples), undefined, undefined, "mermaid");
+  const axis = /x-axis "time" \[(.*)\]/.exec(md)![1];
+  const labels = JSON.parse(`[${axis}]`) as string[];
+  const shown = labels.filter((l) => l.replace(/\u200b/g, "") !== "");
+  assert.equal(new Set(labels).size, labels.length);
+  assert.ok(shown.length <= 12, `${shown.length} labels`);
+  assert.match(shown.at(-1)!, /^40:00$/);
+});

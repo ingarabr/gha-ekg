@@ -44,6 +44,26 @@ function bucket(points: Point[], t0: number, pick: Pick): Bucketed | undefined {
   return { x, y };
 }
 
+const MAX_TICKS = 10;
+
+function clockLabel(sec: number, span: number): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  if (span < 120) return `${sec}s`;
+  if (span < 3600) return `${Math.floor(sec / 60)}:${p(sec % 60)}`;
+  return `${Math.floor(sec / 3600)}:${p(Math.floor((sec % 3600) / 60))}`;
+}
+
+/**
+ * Category labels must be unique or Mermaid merges the buckets, so unlabelled ticks get a distinct
+ * run of zero-width spaces. The last bucket is always labelled.
+ */
+function xAxis(x: number[]): string {
+  const every = Math.ceil(x.length / MAX_TICKS);
+  const span = x.at(-1) ?? 0;
+  const labels = x.map((sec, i) => ((x.length - 1 - i) % every === 0 ? clockLabel(sec, span) : "\u200b".repeat(i + 1)));
+  return `    x-axis "time" [${labels.map((l) => JSON.stringify(l)).join(", ")}]`;
+}
+
 function theme(colors: string[]): string {
   const axis = ["xAxisLabel", "xAxisTitle", "xAxisTick", "xAxisLine", "yAxisLabel", "yAxisTitle", "yAxisTick", "yAxisLine"];
   return [
@@ -90,7 +110,7 @@ function chart(o: ChartOptions): string {
     theme(palette),
     "xychart-beta",
     `    title "${title}"`,
-    `    x-axis "seconds" [${data[0]!.x.join(", ")}]`,
+    xAxis(data[0]!.x),
     `    y-axis "${o.unit}" 0 --> ${top}`,
     ...marks.map((m) => `    ${m}`),
     "```",
@@ -131,7 +151,7 @@ function cpuChart(points: Point[], t0: number, cpus: number): string {
     theme(palette),
     "xychart-beta",
     `    title "${title}"`,
-    `    x-axis "seconds" [${data[0]!.x.join(", ")}]`,
+    xAxis(data[0]!.x),
     '    y-axis "%" 0 --> 100',
     ...bars,
     "```",
